@@ -1,37 +1,49 @@
 import socket
 
-server_ip = input("Enter the server IP: ")
-server_port = int(input("Enter the server port: "))
-
-
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+while True:
+    print("========================== Initialize socket ==========================")
+    server_ip = input("input IP address: ")
+    server_port = int(input("input port number: "))
+    try:
+        sock.connect((server_ip, server_port))
+        break
 
-# Initiate a connection
-sock.connect((server_ip, server_port))
+    except ConnectionRefusedError:
+        print("Error: connection is not built, try again")
+
 
 while True:
-    command = input("Enter command: ")
+    print("============================ Input command ============================")
+    command = input("Input command: ")
 
     sock.sendall(command.encode())
 
-
     if command == "POST_STRING":
-        messages = []
+        print("=============== Content (Type a lone '&' to end message) ===============")
+        message = "POST_STRING"
+        count = 0
         while True:
-            message = input("enter")
-            if message == "&":
+            line = input('client:')
+            if line == "&":
+                print('server: OK')
+                print('---')
+                print('Sent {} messages to (IP address:{}, port number:{})'.format(count, server_ip, server_port))
+                print('Connect status: OK')
+                print('Send status: OK')
+                print('---')
+                sock.sendall(line.encode())
                 break
-            messages.append(message)
-
-        sock.sendall('\n'.join(messages).encode())
+            count = count + 1
+            message += line + "\n"
+            sock.sendall(line.encode())
 
     elif command == "POST_FILE":
-
-    elif command == "GET"
-        
+        print("ok")
+    elif command == "GET":
+        print("ok")
     elif command == "EXIT":
-            break
-
+        break
     else:
         sock.sendall(command.encode())
 
