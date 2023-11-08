@@ -4,12 +4,19 @@ sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 while True:
     print("========================== Initialize socket ==========================")
     server_ip = input("input IP address: ")
-    server_port = int(input("input port number: "))
+    server_port = 0
+    server_port_input = input("input port number: ")
+    if not server_port_input.isdigit():
+        print("Error: connection is not built, try again")
+        continue
     try:
+        server_port = int(server_port_input)
         sock.connect((server_ip, server_port))
+        msg_str = "connection test"
+        sock.sendall(msg_str.encode())
         break
 
-    except ConnectionRefusedError:
+    except socket.error as e:
         print("Error: connection is not built, try again")
 
 
@@ -25,7 +32,11 @@ while True:
         count = 0
         while True:
             line = input('client:')
+            if line == "":
+                print("client: the input cannot be empty.")
+                continue
             if line == "&":
+                count = count + 1
                 print('server: OK')
                 print('---')
                 print('Sent {} messages to (IP address:{}, port number:{})'.format(count, server_ip, server_port))
@@ -45,6 +56,6 @@ while True:
     elif command == "EXIT":
         break
     else:
-        sock.sendall(command.encode())
+        print("server: ERROR - Command not understood")
 
 sock.close()
