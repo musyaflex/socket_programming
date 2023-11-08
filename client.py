@@ -1,6 +1,35 @@
+import os
 import socket
+import struct
 
 BUFFER_SIZE = 4096
+
+
+def send_file(sock, file_path):
+    # Get the file size
+    file_size = os.path.getsize(file_path)
+
+    # Truncate or pad the file name to a maximum length of 128 bytes
+    file_name = os.path.basename(file_path)[:128].encode('utf-8')
+
+    # Pack the file information
+    file_size_data = struct.pack('128sl', file_name, file_size)
+
+    # Send the file information to the server
+    sock.sendall(file_size_data)
+
+    with open(file_path, 'rb') as file:
+        while True:
+            data = file.read(BUFFER_SIZE)
+            if not data:
+                break
+            sock.sendall(data)
+
+
+    # Wait for the server to acknowledge the file information
+    response = sock.recv(BUFFER_SIZE).decode()
+    print(response)
+
 
 while True:
     print("========================== Initialize socket ==========================")
@@ -25,7 +54,6 @@ while True:
         print("Error: cannot send test message to server, try again")  # If after 5 seconds test message not received
     except socket.error as e:
         print("Error: connection is not built, try again")  # Error handling of incorrect ip-port combination
-
 
 while True:
     print("============================ Input command ============================")
@@ -58,7 +86,19 @@ while True:
             print("Connect status: ERROR")
             print("Send status: ERROR")
     elif command == "POST_FILE":
-        print("ok")
+        sock.sendall(command.encode())
+        print(sock.recv(BUFFER_SIZE).decode())
+        file_path = input('client: ')
+
+        try:
+
+            # Send the file to the server
+            send_file(sock, file_path)
+
+            # Print a success message
+            print('File sent successfully')
+        except IOError as e:
+            print(f'Error: Failed to read the file - {str(e)}')
     elif command == "GET":
         sock.sendall(command.encode())
         print("---Received Messages---")
