@@ -72,7 +72,7 @@ class EchoHandler(BaseRequestHandler):
                                 file_name=file_name.decode('utf8').strip('\00')			
                                 print('The file size: ',file_size,'The file name: ',file_name)
                                 # here you can change the path to save the file sent by client
-                                file_new_name = os.path.join("d:\\",file_name)
+                                file_new_name = os.path.join("C:\\",file_name)
                                 print('The save path',file_new_name)
                                 recvd_filesize = 0 													
                                 files = open(file_new_name,"wb")								
