@@ -4,12 +4,8 @@ import struct
 
 BUFFER_SIZE = 4096
 
-def send_file(sock, file_path):
-    # Open the file in binary mode
-    with open(file_path, 'rb') as file:
-        # Read the file contents
-        file_data = file.read()
 
+def send_file(sock, file_path):
     # Get the file size
     file_size = os.path.getsize(file_path)
 
@@ -22,20 +18,17 @@ def send_file(sock, file_path):
     # Send the file information to the server
     sock.sendall(file_size_data)
 
+    with open(file_path, 'rb') as file:
+        while True:
+            data = file.read(BUFFER_SIZE)
+            if not data:
+                break
+            sock.sendall(data)
+
+
     # Wait for the server to acknowledge the file information
     response = sock.recv(BUFFER_SIZE).decode()
-    if response != 'server: OK':
-        print('Error: Server did not acknowledge file information')
-        return
-
-    # Send the file data to the server
-    sock.sendall(file_data)
-
-    # Wait for the server to acknowledge the file transfer
-    response = sock.recv(BUFFER_SIZE).decode()
-    if response != 'server: OK':
-        print('Error: Server did not acknowledge file transfer')
-        return
+    print(response)
 
 
 while True:
@@ -61,7 +54,6 @@ while True:
         print("Error: cannot send test message to server, try again")  # If after 5 seconds test message not received
     except socket.error as e:
         print("Error: connection is not built, try again")  # Error handling of incorrect ip-port combination
-
 
 while True:
     print("============================ Input command ============================")
