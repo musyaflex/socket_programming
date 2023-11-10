@@ -7,25 +7,46 @@ BUFFER_SIZE = 4096
 
 def send_file(sock, file_path):
     # Get the file size
-    file_size = os.path.getsize(file_path)
-
+    try:
+        file_size = os.path.getsize(file_path)
+    except FileNotFoundError:  # Error handling when file do not exist
+        print(f'Cannot find the file')
+        error_msg = "close"
+        sock.sendall(error_msg.encode())
+        print(sock.recv(BUFFER_SIZE).decode())
+        return
+    except OSError:
+        print(f'Cannot find the file')
+        error_msg = "close"
+        sock.sendall(error_msg.encode())
+        print(sock.recv(BUFFER_SIZE).decode())
+        return
+ 
+    if file_size > 256:
+        print(f'File size should be no more than 256 bytes')
+        error_msg = "close"
+        sock.sendall(error_msg.encode())
+        sock.recv(BUFFER_SIZE).decode()
+        return
+ 
+    print(f'Transfer file absolute path: {file_path}')
+ 
     # Truncate or pad the file name to a maximum length of 128 bytes
     file_name = os.path.basename(file_path)[:128].encode('utf-8')
-
+ 
     # Pack the file information
     file_size_data = struct.pack('128sl', file_name, file_size)
-
+ 
     # Send the file information to the server
     sock.sendall(file_size_data)
-
+ 
     with open(file_path, 'rb') as file:
         while True:
             data = file.read(BUFFER_SIZE)
             if not data:
                 break
             sock.sendall(data)
-
-
+ 
     # Wait for the server to acknowledge the file information
     response = sock.recv(BUFFER_SIZE).decode()
     print(response)
@@ -52,13 +73,18 @@ while True:
         break
     except socket.timeout:
         print("Error: cannot send test message to server, try again")  # If after 5 seconds test message not received
-    except socket.error as e:
+    except socket.error:
         print("Error: connection is not built, try again")  # Error handling of incorrect ip-port combination
-
+ 
+first_command = True
 while True:
-    print("============================ Input command ============================")
+    if first_command:
+        print("============================ Input command ============================")
+        first_command = False
+    else:
+        print("==============================next command=============================")
     command = input("Input command: ")
-
+    
     if command == "POST_STRING":
         sock.sendall(command.encode())  # Send POST_STRING to server
         print("=============== Content (Type a lone '&' to end message) ===============")
@@ -83,22 +109,17 @@ while True:
             print('Send status: OK')
             print('---')
         else:  # Error printed
+            print('---')
             print("Connect status: ERROR")
             print("Send status: ERROR")
+            print('---')
     elif command == "POST_FILE":
         sock.sendall(command.encode())
         print(sock.recv(BUFFER_SIZE).decode())
         file_path = input('client: ')
-
-        try:
-
-            # Send the file to the server
-            send_file(sock, file_path)
-
-            # Print a success message
-            print('File sent successfully')
-        except IOError as e:
-            print(f'Error: Failed to read the file - {str(e)}')
+ 
+        # Send the file to the server
+        send_file(sock, file_path)
     elif command == "GET":
         sock.sendall(command.encode())
         print("---Received Messages---")
@@ -107,28 +128,29 @@ while True:
         while in_post:
             rcv_msg = sock.recv(BUFFER_SIZE).decode()
             post_msg_str = rcv_msg.replace("server", "client")  #
-
+ 
             if post_msg_str == "client: &":
                 message.append(post_msg_str)
                 in_post = False
             else:
                 message.append(post_msg_str)
-
+ 
         for msg in message:
             print(msg)
         print('(IP address: {}, port number:{})'.format(server_ip, server_port))
         print("Connect status: OK")
         print("Send status: OK")
-
-
+ 
+ 
     elif command == "EXIT":
         sock.sendall(command.encode())
         ok_msg = sock.recv(BUFFER_SIZE).decode()
+        print(ok_msg)
         sock.close()
         break
     else:
         sock.sendall(command.encode())
         error_msg = sock.recv(BUFFER_SIZE).decode()
         print(error_msg)
-
+ 
 sock.close()
