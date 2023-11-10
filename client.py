@@ -76,11 +76,11 @@ while True:
     except socket.error:
         print("Error: connection is not built, try again")  # Error handling of incorrect ip-port combination
  
-first_command = True
+first_command = True  # varible meaning if a command executed is first one
 while True:
     if first_command:
         print("============================ Input command ============================")
-        first_command = False
+        first_command = False  # unsetting first command 
     else:
         print("==============================next command=============================")
     command = input("Input command: ")
@@ -125,7 +125,8 @@ while True:
         print("---Received Messages---")
         in_post = True
         message = []
-        while in_post:
+        while in_post: 
+            # Receive messages from the server until the end marker is received
             rcv_msg = sock.recv(BUFFER_SIZE).decode()
             post_msg_str = rcv_msg.replace("server", "client")  #
  
